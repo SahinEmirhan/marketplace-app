@@ -1,30 +1,29 @@
-import jwt from "jsonwebtoken"
+import type {NextFunction, Request , Response} from "express"
+import jwt, { type JwtPayload } from "jsonwebtoken"
+import { ResponseStatus } from "../dto/response/enum/ResponseStatus.js";
+import { BaseResponse } from "../dto/response/BaseResponse.js";
 
-
-export function authMiddleware(req : any, res : any , next : any){
-    const header = req?.headers.authorization;
+export function authMiddleware(req : Request, res : Response , next : NextFunction){
+    const header = req.headers.authorization;
 
     if(!header){
-        return res.sendStatus(401);
+        return BaseResponse.send(res , ResponseStatus.UNAUTHORIZED , "Unauthorized" , null);
     }
 
     const token = header.split(" ")[1];
-
+    if(!token){
+        return BaseResponse.send(res , ResponseStatus.UNAUTHORIZED , "Unauthorized" , null);
+    }
 
     try{
         const ACCESS_SECRET = process.env.ACCESS_SECRET;
-        const payload = jwt.verify(
-            token,
-            ACCESS_SECRET as string
-        );
-
-        req.email = payload;
+        const payload = jwt.verify(token, ACCESS_SECRET as string) as JwtPayload;
+        
+        res.locals.userId = payload.userId;
         next();
 
     }catch(err){
-        return res.status(401).json({
-            message: "Token expired or invalid"
-        });
+        return BaseResponse.send(res , ResponseStatus.UNAUTHORIZED , "Token expired or invalid" , null)
     }
 
 

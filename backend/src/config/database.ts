@@ -14,8 +14,9 @@ export async function connectDB(){
         throw new Error("DB Connection Error");
     }
 
-    process.on("SIGINT" , () => {
-        disconnectDB();
+    process.on("SIGINT" , async () => {
+        await disconnectDB();
+        process.exit(0);
     })
 }
 

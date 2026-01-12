@@ -21,4 +21,5 @@ export class UserRepository{
         const savedUser = await UserModel.create(UserMapper.toPersistance(user));
         return UserMapper.toDomain(savedUser);
     }
+
 }

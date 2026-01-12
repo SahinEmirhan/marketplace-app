@@ -34,7 +34,7 @@ export class AuthService{
         }
 
         const ACCESS_SECRET =  process.env.ACCESS_SECRET;
-        const accessToken = jwt.sign({ email: user.getEmail() }, ACCESS_SECRET as string, { expiresIn: "1h" });
+        const accessToken = jwt.sign({ userId : user.getId() }, ACCESS_SECRET as string, { expiresIn: "1h" });
         return accessToken; 
     }
 
