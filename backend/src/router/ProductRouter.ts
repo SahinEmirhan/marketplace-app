@@ -6,7 +6,7 @@ export const router = Router();
 
 router.use(authMiddleware);
 router.get("/list" , ProductController.getProducts);
-router.get("/list/mine" , ProductController.getMyProducts);
+router.get("/list/my" , ProductController.getMyProducts);
 router.get("/:id" , ProductController.getProduct);
 router.post("/create" ,  upload.single("image") , ProductController.createProduct);
 router.post("/delete/:id" , ProductController.removeProduct);
