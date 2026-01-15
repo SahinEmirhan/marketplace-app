@@ -15,7 +15,12 @@ export async function login(req : Request, res : Response){
     }
 
     const accessToken = await service.login(result.data);
-    return BaseResponse.send(res , ResponseStatus.OK , "Successfully Logined" , {accessToken : accessToken})
+    res.cookie('token', accessToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax'
+      });
+    return BaseResponse.send(res , ResponseStatus.OK , "Successfully Logined" , null)
 }
 
 export async function register(req : Request, res : Response){

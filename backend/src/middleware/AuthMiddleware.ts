@@ -4,13 +4,8 @@ import { ResponseStatus } from "../dto/response/enum/ResponseStatus.js";
 import { BaseResponse } from "../dto/response/BaseResponse.js";
 
 export function authMiddleware(req : Request, res : Response , next : NextFunction){
-    const header = req.headers.authorization;
-
-    if(!header){
-        return BaseResponse.send(res , ResponseStatus.UNAUTHORIZED , "Unauthorized" , null);
-    }
-
-    const token = header.split(" ")[1];
+    const token = req.cookies?.token;
+    
     if(!token){
         return BaseResponse.send(res , ResponseStatus.UNAUTHORIZED , "Unauthorized" , null);
     }
