@@ -11,4 +11,4 @@ router.get("/:id" , ProductController.getProduct);
 router.post("/create" ,  upload.single("image") , ProductController.createProduct);
 router.post("/delete/:id" , ProductController.removeProduct);
 router.post("/update/:id" ,  upload.single("image"),  ProductController.updateProduct);
-router.post("like/:id" , ProductController.likeProduct);
+router.post("/like/:id" , ProductController.likeProduct);

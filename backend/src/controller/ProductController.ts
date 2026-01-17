@@ -19,11 +19,12 @@ export async function getMyProducts(req : Request , res : Response){
 }
 
 export async function getProduct(req : Request , res : Response){
-    const id = req.params.id ;
+    const id = req.params.id;
+    const userId = res.locals.userId;
     if(!id){
         return BaseResponse.send(res , ResponseStatus.BAD_REQUEST , "id cannot be a null value" , null);
     }
-    const product = await productService.getProduct(id);
+    const product = await productService.getProduct(id , userId);
     return BaseResponse.send(res ,ResponseStatus.OK , null  , product);
 }
 
@@ -88,4 +89,5 @@ export async function likeProduct(req : Request , res : Response){
         return BaseResponse.send(res , ResponseStatus.BAD_REQUEST , "product not found" , null);
     } 
     await productService.likeProduct(productId , userId);
+    return BaseResponse.send(res , ResponseStatus.OK , "Success" , null);
 }

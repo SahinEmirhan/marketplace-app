@@ -2,6 +2,7 @@ import express, { urlencoded } from 'express'
 import dotenv from 'dotenv'
 import {router as AuthRouter} from "./router/AuthRouter.js" 
 import {router as ProductRouter} from "./router/ProductRouter.js"
+import {router as ChatRouter} from "./router/ChatRouter.js"
 import { connectDB } from './config/database.js';
 import http from "http"
 import cors from "cors"
@@ -24,6 +25,7 @@ app.use(urlencoded({ extended: true }));
 
 app.use("/" , AuthRouter);
 app.use("/product" , ProductRouter )
+app.use("/chat" , ChatRouter )
 
 await connectDB();
 initSocket(server);

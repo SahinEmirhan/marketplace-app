@@ -13,9 +13,9 @@ export class ChatService{
         if(!product.getLikes().includes(userId)){
             throw new Error("Like required");
         }
-
         const newChat = new Chat(productId , product.getOwner() , userId);
-        const chat =  await this.chatRepository.findOrCreateChat(newChat);
+        const chat = await this.chatRepository.findOrCreateChat(newChat);
+        console.log(JSON.stringify(chat));
         return chat.getId();
     }
 

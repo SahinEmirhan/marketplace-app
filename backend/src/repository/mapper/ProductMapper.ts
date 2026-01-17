@@ -7,7 +7,6 @@ export class ProductMapper{
 
 
     static toPersistance(product : Product){
-        console.log("in mapper => toPersistance")
         return {
             _id : product.getId() || null,
             name : product.getName(),

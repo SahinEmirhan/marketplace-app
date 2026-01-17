@@ -5,7 +5,9 @@ import { ChatMapper } from "./mapper/ChatMapper.js";
 export class ChatRepository{
     async findOrCreateChat(chat : Chat){
         const persistanceChat = ChatMapper.toPersistance(chat);
-        const dbChat = ChatModel.findOneAndUpdate(persistanceChat , {$setOnInsert : persistanceChat} , {upsert : true , new : true});
+        console.log("persistance chat : " + JSON.stringify(persistanceChat));
+        const dbChat = await ChatModel.findOneAndUpdate(persistanceChat , {$setOnInsert : persistanceChat} , {upsert : true , new : true});
+        console.log("dbChat : " + dbChat);
         if(!dbChat){
             throw new Error("find or create chat error")
         }

@@ -6,29 +6,50 @@ const chatRepository = new ChatRepository();
 const messageRepository = new MessageRepository();
 
 export function registerChatHandlers(io : any , socket : Socket){
+    socket.removeAllListeners("send_message");
+    socket.removeAllListeners("join_chat");
     socket.on("join_chat" , async (chatId : string) => {
+        const room = `chat:${chatId}`;
+
+        console.log(socket.rooms);
+        if (socket.rooms.has(room)) {
+            console.log(`ZATEN ODADA → ${socket.id}`);
+            return;
+        }
+
         const userId = socket.data.userId;
         const chat = await chatRepository.findChat(chatId);
-        if(chat.getOwnerId() != userId || chat.getLikerId() != userId){
+        if(chat.getOwnerId() != userId && chat.getLikerId() != userId){
             throw new Error("Unauthorized to connect chat room");
         }
-        socket.join(`chat:${chatId}`)
+        
+        socket.join(room);
+        console.log(`${room} odasına join olundu`);
+
+        const userType = chat.getOwnerId == userId ?  "owner" : "liker";
+
+        socket.emit("chat_joined", {
+            userType
+        });
     })
 
 
     socket.on("send_message" , async (chatId : string , content : string) => {
+        console.log(`chat:${chatId} odasına gönderilen mesaj : ${content}`)
         const userId = socket.data.userId;
         const chat = await chatRepository.findChat(chatId);
-        if(chat.getOwnerId() != userId || chat.getLikerId() != userId){
-            throw new Error("Unauthorized to connect chat room");
+        if (chat.getOwnerId() !== userId && chat.getLikerId() !== userId) {
+            socket.emit("error_message", {
+                message: "Unauthorized to connect chat room"
+            });
+            return;
         }
-        let senderType = "liker";
-        if(userId == chat.getOwnerId()){
-            senderType = "owner";
-        }
+
+        const userType = chat.getOwnerId == userId ?  "owner" : "liker";
+
         const message = new Message(chatId, userId , content)
         const createdMessage = await messageRepository.createMessage(message);
-        io.to(`chat:${chat.getId()}`).emit("receive_message" , {content : createdMessage.getContent() , senderType : senderType});
+        io.to(`chat:${chat.getId()}`).emit("receive_message" , {content : createdMessage.getContent() , senderType : userType});
     })
 
     

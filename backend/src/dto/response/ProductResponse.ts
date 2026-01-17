@@ -4,8 +4,9 @@ export class ProductResponse{
     description : string;
     price : number;
     imageUrl : string;
+    isLiked! : boolean | null;
 
-    constructor(id : string | null , name : string , description : string , price : number , imageUrl : string){
+    constructor(id : string | null , name : string , description : string , price : number , imageUrl : string ){
         this.id = id;
         this.name = name; 
         this.description = description;
@@ -13,4 +14,8 @@ export class ProductResponse{
         this.imageUrl = imageUrl;
     }
 
+    setIsLiked(isLiked : boolean){
+        this.isLiked = isLiked;
+        return this;
+    }
 }

@@ -17,10 +17,10 @@ export class ProductService{
         return await this.productsToProductResponseList(products);
     }
 
-    async getProduct(productId : string){
+    async getProduct(productId : string , userId : string){
         const product = await this.productRepository.getProduct(productId);
         const signedImageUrl = await getSignedImageUrlFromS3(product.getImageKey());
-        const productRes = new ProductResponse(product.getId() , product.getName() , product.getDescription() , product.getPrice() , signedImageUrl)
+        const productRes = new ProductResponse(product.getId() , product.getName() , product.getDescription() , product.getPrice() , signedImageUrl).setIsLiked(product.getLikes().includes(userId));
         return productRes;
     }
 
