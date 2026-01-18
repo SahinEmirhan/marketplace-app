@@ -11,7 +11,6 @@ export function registerChatHandlers(io : any , socket : Socket){
     socket.on("join_chat" , async (chatId : string) => {
         const room = `chat:${chatId}`;
 
-        console.log(socket.rooms);
         if (socket.rooms.has(room)) {
             console.log(`ZATEN ODADA → ${socket.id}`);
             return;
@@ -26,16 +25,15 @@ export function registerChatHandlers(io : any , socket : Socket){
         socket.join(room);
         console.log(`${room} odasına join olundu`);
 
-        const userType = chat.getOwnerId == userId ?  "owner" : "liker";
+        const userType = chat.getOwnerId() == userId ?  "owner" : "liker";
 
         socket.emit("chat_joined", {
-            userType
+            senderType : userType
         });
     })
 
 
     socket.on("send_message" , async (chatId : string , content : string) => {
-        console.log(`chat:${chatId} odasına gönderilen mesaj : ${content}`)
         const userId = socket.data.userId;
         const chat = await chatRepository.findChat(chatId);
         if (chat.getOwnerId() !== userId && chat.getLikerId() !== userId) {
@@ -44,8 +42,8 @@ export function registerChatHandlers(io : any , socket : Socket){
             });
             return;
         }
-
-        const userType = chat.getOwnerId == userId ?  "owner" : "liker";
+        const userType = chat.getOwnerId() == userId ?  "owner" : "liker";
+        console.log("userType : " + userType);
 
         const message = new Message(chatId, userId , content)
         const createdMessage = await messageRepository.createMessage(message);

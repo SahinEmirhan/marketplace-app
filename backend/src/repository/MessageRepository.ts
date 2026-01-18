@@ -6,4 +6,9 @@ export class MessageRepository{
         const createdMessage = await MessageModel.create(MessageMapper.toPersistance(message));
         return MessageMapper.toDomain(createdMessage);
     }
+
+    async findChatMessages(chatId : string){
+        const messages = await MessageModel.find({chatId : chatId});
+        return messages.map(m => MessageMapper.toDomain(m));
+    }
 }

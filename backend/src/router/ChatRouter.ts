@@ -6,3 +6,5 @@ export const router = Router();
 
 router.use(authMiddleware);
 router.post("/create/:id", ChatController.createChatRoom);
+router.get("/my", ChatController.getMyChats);
+router.get("/messages/:id" , ChatController.getChatMessages);
