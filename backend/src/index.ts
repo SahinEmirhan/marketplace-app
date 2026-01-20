@@ -1,13 +1,13 @@
-import express, { urlencoded } from 'express'
-import dotenv from 'dotenv'
+import express, {urlencoded} from 'express'
+import {connectDB} from './config/database.js';
 import {router as AuthRouter} from "./router/AuthRouter.js" 
 import {router as ProductRouter} from "./router/ProductRouter.js"
 import {router as ChatRouter} from "./router/ChatRouter.js"
-import { connectDB } from './config/database.js';
-import http from "http"
+import {initSocket} from './socket/init.js';
 import cors from "cors"
 import cookieParser from "cookie-parser"
-import { initSocket } from './socket/init.js';
+import dotenv from 'dotenv'
+import http from "http"
 
 dotenv.config();
 

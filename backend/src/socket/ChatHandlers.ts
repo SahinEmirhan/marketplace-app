@@ -1,7 +1,8 @@
-import type { Socket } from "socket.io";
-import { ChatRepository } from "../repository/ChatRepository.js";
-import { MessageRepository } from "../repository/MessageRepository.js";
-import { Message } from "../entity/Message.js";
+import {ChatRepository} from "../repository/ChatRepository.js";
+import {MessageRepository} from "../repository/MessageRepository.js";
+import {Message} from "../entity/Message.js";
+import type {Socket} from "socket.io";
+
 const chatRepository = new ChatRepository();
 const messageRepository = new MessageRepository();
 

@@ -1,6 +1,7 @@
 import Product from "../entity/Product.js"
 import { ProductMapper } from "./mapper/ProductMapper.js";
 import { ProductModel } from "./schema/ProductSchema.js";
+
 export class ProductRepository{
     async getProductsNotOwnedBy(ownerId : string){
         const products = await ProductModel.find({owner : {$ne : ownerId}}); 

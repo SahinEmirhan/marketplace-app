@@ -1,8 +1,8 @@
-import type { Request, Response } from "express";
-import {AuthRequestSchema } from "../dto/request/AuthRequest.js";
+import type {Request, Response} from "express";
 import {AuthService} from "../service/AuthService.js";
-import { BaseResponse } from "../dto/response/BaseResponse.js";
-import { ResponseStatus } from "../dto/response/enum/ResponseStatus.js";
+import {AuthRequestSchema} from "../dto/request/AuthRequest.js";
+import {BaseResponse} from "../dto/response/BaseResponse.js";
+import {ResponseStatus} from "../dto/response/enum/ResponseStatus.js";
 
 const service = new AuthService();
 

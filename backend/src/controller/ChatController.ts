@@ -1,7 +1,7 @@
 import type{Request , Response} from "express"
+import { ChatService } from "../service/ChatService.js";
 import { BaseResponse } from "../dto/response/BaseResponse.js";
 import { ResponseStatus } from "../dto/response/enum/ResponseStatus.js";
-import { ChatService } from "../service/ChatService.js";
 
 const chatService = new ChatService();
 

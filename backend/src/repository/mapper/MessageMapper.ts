@@ -1,4 +1,4 @@
-import { Message } from "../../entity/Message.js"
+import {Message} from "../../entity/Message.js"
 
 export class MessageMapper{
     static toDomain(doc : any){

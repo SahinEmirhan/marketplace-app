@@ -6,5 +6,4 @@ export class MessageResponse{
         this.content = content;
         this.senderType = senderType;
     }
-
 }

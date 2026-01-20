@@ -1,6 +1,6 @@
-import { Chat } from "../entity/Chat.js";
-import { ChatModel } from "./schema/ChatSchema.js";
-import { ChatMapper } from "./mapper/ChatMapper.js";
+import {Chat} from "../entity/Chat.js";
+import {ChatModel} from "./schema/ChatSchema.js";
+import {ChatMapper} from "./mapper/ChatMapper.js";
 
 export class ChatRepository{
     async findOrCreateChat(chat : Chat){

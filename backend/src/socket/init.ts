@@ -1,7 +1,6 @@
+import {registerChatHandlers} from "./ChatHandlers.js"
+import jwt, {type JwtPayload} from "jsonwebtoken"
 import {Server} from "socket.io"
-import jwt from "jsonwebtoken"
-import type { JwtPayload } from "jsonwebtoken"
-import { registerChatHandlers } from "./ChatHandlers.js"
 
 export const initSocket = (server : any)=> {
     const io = new Server(server , {
@@ -13,7 +12,6 @@ export const initSocket = (server : any)=> {
 
     io.use((socket , next)=> {
         const cookie = socket.handshake.headers.cookie;
-
         const token = cookie?.split("token=")[1];
 
         if(!token){
@@ -37,7 +35,6 @@ export const initSocket = (server : any)=> {
         }catch(err){
             next(new Error("Unauthorized"));
         }
-
 
         io.on("connection" , (socket)=>{
             registerChatHandlers(io , socket);

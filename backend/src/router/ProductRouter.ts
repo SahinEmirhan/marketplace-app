@@ -1,7 +1,8 @@
 import {Router} from "express"
 import * as ProductController from "../controller/ProductController.js";
-import { authMiddleware } from "../middleware/AuthMiddleware.js";
-import { upload } from "../middleware/UploadImageMiddleware.js";
+import {authMiddleware} from "../middleware/AuthMiddleware.js";
+import {upload} from "../middleware/UploadImageMiddleware.js";
+
 export const router = Router();
 
 router.use(authMiddleware);

@@ -1,8 +1,9 @@
-import type { ProductRequest } from "../dto/request/ProductRequest.js";
 import { ProductRepository } from "../repository/ProductRepository.js";
 import Product from "../entity/Product.js";
-import {saveImageToS3 , getSignedImageUrlFromS3 , deleteImageFromS3} from "../aws/s3.js";
+import type { ProductRequest } from "../dto/request/ProductRequest.js";
 import { ProductResponse } from "../dto/response/ProductResponse.js";
+import {saveImageToS3 , getSignedImageUrlFromS3 , deleteImageFromS3} from "../aws/s3.js";
+
 export class ProductService{
 
     private readonly productRepository = new ProductRepository();

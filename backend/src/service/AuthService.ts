@@ -1,8 +1,8 @@
-import type{AuthRequest} from "../dto/request/AuthRequest.js"
+import {UserRepository} from "../repository/UserRepository.js"
 import User from "../entity/User.js"
+import type{AuthRequest} from "../dto/request/AuthRequest.js"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-import {UserRepository} from "../repository/UserRepository.js"
 
 
 export class AuthService{

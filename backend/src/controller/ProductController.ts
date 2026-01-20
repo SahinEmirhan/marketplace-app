@@ -1,8 +1,8 @@
 import type {Request , Response} from "express"
-import { ProductService } from "../service/ProductService.js";
-import { BaseResponse } from "../dto/response/BaseResponse.js";
-import { ResponseStatus } from "../dto/response/enum/ResponseStatus.js";
-import { ProductRequestSchema } from "../dto/request/ProductRequest.js";
+import {ProductService} from "../service/ProductService.js";
+import {ProductRequestSchema} from "../dto/request/ProductRequest.js";
+import {BaseResponse} from "../dto/response/BaseResponse.js";
+import {ResponseStatus} from "../dto/response/enum/ResponseStatus.js";
 
 const productService = new ProductService(); 
 

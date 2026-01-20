@@ -1,4 +1,5 @@
 import Product from "../../entity/Product.js";
+
 export class ProductMapper{
     static toDomain(doc : any){
         const product = new Product(doc.name , doc.description , doc.price , doc.imageKey, doc.owner , doc.likes , doc._id);
