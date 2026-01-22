@@ -1,0 +1,1 @@
+{"version":3,"file":"BaseResponse.js","sourceRoot":"","sources":["../../../src/dto/response/BaseResponse.ts"],"names":[],"mappings":"AACA,OAAO,EAAC,cAAc,EAAC,MAAM,0BAA0B,CAAC;AAExD,MAAM,OAAO,YAAY;IACvB,MAAM,CAAC,IAAI,CACT,GAAa,EACb,MAAsB,EACtB,OAAsB,EACtB,IAAU;QAEV,OAAO,GAAG,CAAC,MAAM,CAAC,MAAM,CAAC,CAAC,IAAI,CAAC,EAAE,OAAO,EAAE,IAAI,EAAE,CAAC,CAAC;IACpD,CAAC;CACF"}
