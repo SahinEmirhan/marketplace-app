@@ -1,7 +1,11 @@
 import {Router} from "express"
-import * as AuthController from "../controller/AuthController.js";
+
+import { login } from "../controllers/auth/login/post.js"
+import { logout } from "../controllers/auth/logout/post.js";
+import {register} from "../controllers/auth/register/post.js"
 
 export const router = Router();
 
-router.post("/login" , AuthController.login);
-router.post("/register" , AuthController.register);
+router.post("/login" , login);
+router.post("/register" , register);
+router.post("/logout" , logout);

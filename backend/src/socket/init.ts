@@ -1,7 +1,8 @@
 import {registerChatHandlers} from "./ChatHandlers.js"
-import jwt, {type JwtPayload} from "jsonwebtoken"
 import {Server} from "socket.io"
-
+import type { Request, Response } from "express";
+import {sessionProperties} from "../index.js";
+import sharedSession from "express-socket.io-session";
 export const initSocket = (server : any)=> {
     const io = new Server(server , {
         cors : {
@@ -10,37 +11,37 @@ export const initSocket = (server : any)=> {
         }
     })
 
-    io.use((socket , next)=> {
-        const cookie = socket.handshake.headers.cookie;
-        const token = cookie?.split("token=")[1];
+io.use(
+  sharedSession(sessionProperties, {
+    autoSave: true
+  })
+);
 
-        if(!token){
-            console.log("Token bulunamadı. Cookie:", cookie);
-            return next(new Error("Unauthorized"))
-        }
+io.use((socket, next) => {
+  const session = (socket.request as any).session
 
-        try{
-            const payload = jwt.verify(token , process.env.ACCESS_SECRET as string) as JwtPayload;
-            socket.data.userId = payload.userId;
+  if (!session?.user) {
+    return next(new Error("Unauthorized"));
+  }
 
-            // Disconnect existing sockets for this user
-            for (const [id, s] of io.sockets.sockets) {
-                if (s.data.userId === payload.userId && id !== socket.id) {
-                    console.log(`Disconnecting existing socket ${id} for user ${payload.userId}`);
-                    s.disconnect();
-                }
-            }
+  const userId = session.user.id;
+  socket.data.userId = userId;
 
-            next();
-        }catch(err){
-            next(new Error("Unauthorized"));
-        }
+  // Aynı user'ın eski socketlerini düşür
+  for (const [id, s] of io.sockets.sockets) {
+    if (s.data.userId === userId && id !== socket.id) {
+      console.log(`Disconnecting existing socket ${id} for user ${userId}`);
+      s.disconnect(true);
+    }
+  }
 
-        io.on("connection" , (socket)=>{
-            registerChatHandlers(io , socket);
-            socket.on("disconnect", (reason) => {
-                console.log("Disconnected:", socket.id, reason);
-            });
+  next();
+
+    io.on("connection" , (socket)=>{
+        registerChatHandlers(io , socket);
+        socket.on("disconnect", (reason) => {
+            console.log("Disconnected:", socket.id, reason);
+        });
         })
 
     })
