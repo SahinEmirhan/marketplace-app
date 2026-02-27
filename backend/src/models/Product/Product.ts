@@ -1,10 +1,12 @@
-import { Schema , model , Model } from "mongoose";
+import { Schema , model , Model, Types } from "mongoose";
+import mongoose from "mongoose";
 import { ProductResponse } from "../../dto/response/ProductResponse.js";
 import type { ProductRequest } from "../../dto/request/ProductRequest.js";
 import { deleteImage } from "../../s3/deleteImage.js";
 import { getSignedImageUrl } from "../../s3/getSignedImageUrl.js";
 import { saveImage } from "../../s3/saveImage.js";
-import { productsToProductResponseList } from "./functions/productsToProductResponseList.js";
+import { pageTheProducts } from "./functions/pageTheProducts.js";
+import { ProductPageResponse } from "../../dto/response/ProductPageResponse.js";
 
 const MAX_DATABASE_ARRAY_FIELD_LENGTH = 1e4;
 const MAX_DATABASE_TEXT_FIELD_LENGTH = 1e4;
@@ -16,7 +18,7 @@ export interface IProduct{
     description : string,
     price : number,
     imageKey : string,
-    owner : string,
+    owner : Types.ObjectId,
     likes : string[]
 }
 
@@ -26,7 +28,7 @@ const ProductSchema = new Schema<IProduct>(
         description : {required : true , type : String , maxLength : MAX_DATABASE_TEXT_FIELD_LENGTH},
         price : {required : true , type : Number, max : MAX_PRICE},
         imageKey : {required : true , type : String},
-        owner : {required : true , type : String},
+        owner : {required : true , type : Schema.Types.ObjectId, ref : "User"},
         likes : {required : false , type : [String] , maxLength : MAX_DATABASE_ARRAY_FIELD_LENGTH}
     },
     {
@@ -35,9 +37,9 @@ const ProductSchema = new Schema<IProduct>(
 )
 
 export interface IProductModel extends Model<IProduct>{
-    findProductsNotOwnedByOwnerId(ownerId : string) : Promise<IProduct[]>;
-    findProductsOwnedByOwnerId(ownerId : string) : Promise<IProduct[]>;
-    findProductById(id : string) : Promise<IProduct>;
+    findProductsNotOwnedByOwnerId(ownerId : string , page : number , size : number) : Promise<ProductPageResponse>;
+    findProductsOwnedByOwnerId(ownerId : string , page : number , size : number) : Promise<ProductPageResponse>;
+    findProductById(id : string) : Promise<ProductResponse>;
     createProduct(product : ProductRequest , ownerId : string , image : Express.Multer.File) : Promise<void>;
     deleteProductById(productId : string , userId : string) : Promise<void>;
     updateProduct(product : ProductRequest , image : Express.Multer.File, ownerId : string , productId : string) : Promise<void>;
@@ -46,22 +48,12 @@ export interface IProductModel extends Model<IProduct>{
 
 export const Product = model<IProduct , IProductModel>("Product" , ProductSchema);
 
-ProductSchema.statics.findProductsNotOwnedByOwnerId = async function(ownerId : string) : Promise<ProductResponse[]>{
-    const products = await this.find({owner : {$ne : ownerId}}); 
-    if(!products || products.length == 0){
-        return [];
-    }
-
-    return productsToProductResponseList(products);  
+ProductSchema.statics.findProductsNotOwnedByOwnerId = async function(ownerId : string , page : number , size : number) : Promise<ProductPageResponse>{
+    return await pageTheProducts(Product, {owner : {$ne : ownerId}} , page , size);
 }
 
-ProductSchema.statics.findProductsOwnedByOwnerId = async function(ownerId : string) : Promise<ProductResponse[]>{
-    const products = await this.find({owner : ownerId});
-    if(!products || products.length == 0 ){
-        return [];
-    }
-
-    return productsToProductResponseList(products);  
+ProductSchema.statics.findProductsOwnedByOwnerId = async function(ownerId : string , page : number , size : number) : Promise<ProductPageResponse>{
+    return await pageTheProducts(Product, {owner : ownerId} , page , size);
 }
 
 ProductSchema.statics.findProductById = async function(id : string) : Promise<ProductResponse>{
@@ -93,14 +85,27 @@ ProductSchema.statics.deleteProductById = async function(productId : string , us
 }
 
 ProductSchema.statics.updateProduct = async function(product : ProductRequest , image : Express.Multer.File, ownerId : string , productId : string) : Promise<void>{
-    const productDoc = await this.findOne({_id : productId, owner : ownerId});
-    if(!productDoc){
-        throw new Error("Product not found or user does not own the product")
+
+    const session = await mongoose.startSession();
+
+    try {
+        session.withTransaction(async () => {
+            const productDoc = await this.findOne({_id : productId, owner : ownerId});
+            if(!productDoc){
+                throw new Error("Product not found or user does not own the product")
+            }
+            await deleteImage(productDoc.getImageKey());
+            const imageKey = await saveImage(image.buffer , image.mimetype);
+            productDoc.setName(product.name).setDescription(product.description).setPrice(product.price).setImageKey(imageKey);
+            await this.updateOne( {_id : productDoc.getId()}, productDoc);
+        });
+    } catch (error) {
+        throw error;
+    }finally{
+        session.endSession();
     }
-    await deleteImage(productDoc.getImageKey());
-    const imageKey = await saveImage(image.buffer , image.mimetype);
-    productDoc.setName(product.name).setDescription(product.description).setPrice(product.price).setImageKey(imageKey);
-    await this.updateOne( {_id : productDoc.getId()}, productDoc);
+
+    
 }
 
 

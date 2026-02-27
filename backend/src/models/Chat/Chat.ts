@@ -1,24 +1,29 @@
-import { Schema, model, Model } from "mongoose";
+import mongoose, { Schema, model, Model , Types } from "mongoose";
 import { ChatResponse } from "../../dto/response/ChatResponse.js";
 import { MessageResponse } from "../../dto/response/MessageResponse.js";
 import {Product, type IProduct} from "../Product/Product.js";
-import { Message } from "../Message/Message.js";
+import type { IUser } from "../User/User.js";
+import {type IMessage } from "../Message/Message.js";
 import { getSignedImageUrl } from "../../s3/getSignedImageUrl.js";
+import { toDomain } from "./mappers/toDomain.js";
+import {type HydratedDocument } from "mongoose";
+
 
 export interface IChat{
     id : string | null;
-    productId : string;
-    ownerId : string;
-    likerId : string;
+    productId : Types.ObjectId | IProduct;
+    ownerId : Types.ObjectId | IUser;
+    likerId : Types.ObjectId | IUser;
+    messages?: IMessage[];
 }
 
 const ChatSchema = new Schema({
-    productId : {required : true , type : String},
-    ownerId : {required : true , type : String},
-    likerId : {required : true , type : String}
+    productId : {required : true , type : Schema.Types.ObjectId, ref : "Product"},
+    ownerId : {required : true , type : Schema.Types.ObjectId, ref : "User"},
+    likerId : {required : true , type : Schema.Types.ObjectId, ref : "User"}
 },
 {
-    timestamps : true
+    timestamps : true, toJSON: { virtuals: true }, toObject: { virtuals: true }
 }
 )
 
@@ -29,6 +34,13 @@ ChatSchema.index({
     unique : true
 }
 )
+
+ChatSchema.virtual("messages", {
+  ref: "Message",
+  localField: "_id",
+  foreignField: "chatId",
+  options: { sort: { createdAt: 1 } }
+});
 
 export interface IChatModel extends Model<IChat>{
     findOrCreateChat(productId : string, userId : string) : Promise<IChat>;
@@ -41,29 +53,38 @@ export const Chat = model<IChat , IChatModel>("Chat" , ChatSchema);
 
 
 ChatSchema.statics.findOrCreateChat = async function(productId : string, userId : string) : Promise<ChatResponse>{
-    const product = await Product.findById(productId);
-    if(!product){
-        throw new Error("Product not found");
-    }
-    if(product.owner == userId){
-            throw new Error("Owner cannot start chat with himself")
-        }
-    if(!product.likes.includes(userId)){
-            throw new Error("Like required");
-    }
-    const newChat : IChat = {
-        id : null,
-        productId : productId,
-        ownerId : product.owner,
-        likerId : userId
-    }
-    const chatDoc = await this.findOneAndUpdate(newChat , {$setOnInsert : newChat} , {upsert : true , new : true});
-    if(!chatDoc){
-        throw new Error("find or create chat error")
-    }
-    const signedImageUrl =  await getSignedImageUrl(product.imageKey)
+    const session = await mongoose.startSession();
+    try{
+        return await session.withTransaction(async () => {
+            const product = await Product.findById(productId);
+            if(!product){
+                throw new Error("Product not found");
+            }
+            if(product.owner.toString() === userId){
+                    throw new Error("Owner cannot start chat with himself")
+            }
+            if(!product.likes.includes(userId)){
+                    throw new Error("Like required");
+            }
+            const newChat : IChat = {
+                id : null,
+                productId : new Types.ObjectId(productId),
+                ownerId : product.owner,
+                likerId : new Types.ObjectId(userId)
+            }
+            const chatDoc = await this.findOneAndUpdate(newChat , {$setOnInsert : newChat} , {upsert : true , new : true});
+            if(!chatDoc){
+                throw new Error("find or create chat error")
+            }
+            const signedImageUrl =  await getSignedImageUrl(product.imageKey)
 
-     return new ChatResponse(chatDoc.getId() as string , product.name , product.price , signedImageUrl );
+            return new ChatResponse(chatDoc.getId() as string , product.name , product.price , signedImageUrl );
+        })
+    }catch(err){
+        throw err;
+    }finally{
+        await session.endSession();
+    }
 }
 
 
@@ -76,12 +97,12 @@ ChatSchema.statics.findChatByChatId = async function(chatId : string) : Promise<
 }
 
 ChatSchema.statics.findChatsByUserId = async function(userId : string){
-        
-        const chats = await this.find({ $or : [{ownerId : userId}, {likerId : userId}]});
-        if (!chats){
+        const chatDocs = await this.find({ $or : [{ownerId : userId}, {likerId : userId}]}).populate("productId" , "name price imageKey");
+        if (!chatDocs){
             return [];
         }
-        const chatProducts : IProduct[] = await Promise.all(chats.map((c : IChat) => Product.findProductById(c.productId)));
+        const chats = chatDocs.map((c : HydratedDocument<IChat>) => toDomain(c));
+        const chatProducts : IProduct[] = chats.map((c: IChat) => c.productId as IProduct).filter((p : IProduct) => p != null) as IProduct[];
         if(chatProducts.length == 0){
             return [];
         }
@@ -89,27 +110,27 @@ ChatSchema.statics.findChatsByUserId = async function(userId : string){
         const chatsResList : ChatResponse[] = [];
         for(let i = 0 ; i < chatProducts.length; i++){
             const signedImageUrl =  await getSignedImageUrl(chatProducts[i]!.imageKey)
-            chatsResList.push(new ChatResponse(chats[i]?.getId() as string , chatProducts[i]!.name, chatProducts[i]!.price, signedImageUrl))
+            chatsResList.push(new ChatResponse(chats[i]?.id as string , chatProducts[i]!.name, chatProducts[i]!.price, signedImageUrl))
         }
 
         return chatsResList;
     }
 
  ChatSchema.statics.findChatMessagesByUserId = async function(userId : string , chatId : string){
-            const chatDoc = await this.findOne({_id : chatId});
+            const chatDoc = await this.findOne({_id : chatId}).populate("messages");
             if (!chatDoc) {
                 throw new Error("Chat not found");
             }
-            if (chatDoc.ownerId !== userId && chatDoc.likerId !== userId) {
+            if (chatDoc.ownerId.toString() !== userId && chatDoc.likerId.toString() !== userId) {
                 throw new Error("Unauthorized");
             }
     
-            const messages = await Message.findMessagesByChatId(chatId);
+            const messages = chatDoc.messages || [];
     
             const messageResponseList : MessageResponse[] = []
-            messages.map(m => {
+            messages.map((m : IMessage) => {
                 let userType = "liker";
-                if(m.senderId == chatDoc.ownerId){
+                if(m.senderId.toString() == chatDoc.ownerId.toString()){
                     userType = "owner"
                 }
                 messageResponseList.push(new MessageResponse(m.content , userType))
